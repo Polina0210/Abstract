@@ -8,9 +8,12 @@
 
 class CppClass : public ClassUnit {
 public:
-    CppClass(const std::string& name) : ClassUnit(name) { }
+    explicit CppClass(const std::string& name) : ClassUnit(name) {
+        //У С++ иммется три типа доступа, поэтому размер меняем на три
+        m_fields.resize(3);
+    }
 
-    std::string compile(unsigned int level = 0) const {
+    std::string compile(unsigned int level = 0) const override {
         std::string result = generateShift(level) + "class " + m_name + "{\n";
         for (size_t i = 0; i < ACCESS_MODIFIERS.size(); i++) {
             if (m_fields[i].empty()) continue;
@@ -25,9 +28,9 @@ public:
 
 class CppMethod : public MethodUnit {
 public:
-    CppMethod(const std::string& name, const std::string& returnType, Flags flags) : MethodUnit(name, returnType, flags) { }
+    explicit CppMethod(const std::string& name, const std::string& returnType, Flags flags) : MethodUnit(name, returnType, flags) { }
 
-    std::string compile(unsigned int level = 0) const {
+    std::string compile(unsigned int level = 0) const override {
         std::string result = generateShift(level);
 
         if (m_flags & STATIC) result += "static ";
@@ -48,22 +51,22 @@ public:
 
 class CppPrintOperator : public PrintOperatorUnit {
 public:
-    CppPrintOperator(const std::string& text) : PrintOperatorUnit(text) { }
+    explicit CppPrintOperator(const std::string& text) : PrintOperatorUnit(text) { }
 
-    std::string compile(unsigned int level = 0) const {
+    std::string compile(unsigned int level = 0) const override {
         return generateShift(level) + "printf( \"" + m_text + "\"); \n";
     }
 };
 
 class CppFactory : public UnitFactory {
 public:
-    std::shared_ptr < ClassUnit > CreateClass(const std::string& name) {
+    std::shared_ptr < ClassUnit > CreateClass(const std::string& name, Unit::Flags, Unit::Flags) const override {
         return std::make_shared< CppClass >(name);
     }
-    std::shared_ptr < MethodUnit > CreateMethod(const std::string& name, const std::string& returnType, Unit::Flags flags){
+    std::shared_ptr < MethodUnit > CreateMethod(const std::string& name, const std::string& returnType, Unit::Flags flags) const override{
         return std::make_shared< CppMethod >(name, returnType, flags);
     }
-    std::shared_ptr < PrintOperatorUnit > CreatePrintOperator(const std::string& text) {
+    std::shared_ptr < PrintOperatorUnit > CreatePrintOperator(const std::string& text) const override {
         return std::make_shared< CppPrintOperator >(text);
     }
 };
