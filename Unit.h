@@ -44,14 +44,17 @@ public:
     enum AccessModifier {
         PUBLIC,
         PROTECTED,
-        PRIVATE
+        PRIVATE,
+        INTERNAL,
+        PROTECTED_INTERNAL,
+        PRIVATE_PROTECTED
     };
     static const std::vector< std::string > ACCESS_MODIFIERS;
     explicit ClassUnit(const std::string& name) : m_name(name) {m_fields.resize(ACCESS_MODIFIERS.size());}
 
 
 
-    void add(const std::shared_ptr<Unit>& unit, Flags flags) {
+    virtual void add(const std::shared_ptr<Unit>& unit, Flags flags) {
         unsigned int accessModifier = PRIVATE;
         if (flags < ACCESS_MODIFIERS.size()) accessModifier = flags;
         m_fields[accessModifier].push_back(unit);
@@ -64,17 +67,28 @@ protected:
     std::vector<Fields> m_fields;
 };
 
-const std::vector< std::string > ClassUnit::ACCESS_MODIFIERS = {"public", "protected", "private"};
+const std::vector< std::string > ClassUnit::ACCESS_MODIFIERS = {"public", "protected", "private", "internal", "protected internal", "private protected"};
 
 class MethodUnit : public Unit {
 public:
+
+    //C++, C#, Java: STATIC, CONST
+    //C++, C#: VIRTUAL
+    //C#, Java: ABSTRACT
+    //C#: ASYNC, UNSAVE
+    //Java: FINAL
     enum Modifier {
+
         PUBLIC = 1,
         PROTECTED = 1 << 1,
         PRIVATE = 1 << 2,
         STATIC = 1 << 3,
         CONST = 1 << 4,
-        VIRTUAL = 1 << 5
+        VIRTUAL = 1 << 5,
+        ABSTRACT = 1 << 6,
+        ASYNC = 1 << 7,
+        UNSAVE = 1 << 8,
+        FINAL = 1 << 9,
     };
     MethodUnit(const std::string& name, const std::string& returnType, Flags flags) : m_name(name), m_returnType(returnType), m_flags(flags) { }
     void add(const std::shared_ptr<Unit>& unit, Flags /* flags */ = 0) {m_body.push_back(unit);}
@@ -98,9 +112,9 @@ protected:
 
 class UnitFactory {
 public:
-    virtual std::shared_ptr <ClassUnit> CreateClass(const std::string& name) = 0;
-    virtual std::shared_ptr <MethodUnit> CreateMethod(const std::string& name, const std::string& returnType, Unit::Flags flags) = 0;
-    virtual std::shared_ptr <PrintOperatorUnit> CreatePrintOperator(const std::string& text) = 0;
+    virtual std::shared_ptr <ClassUnit> CreateClass(const std::string& name, Unit::Flags accessFlags = 0, Unit::Flags modificatorFlags = 0) const = 0;
+    virtual std::shared_ptr <MethodUnit> CreateMethod(const std::string& name, const std::string& returnType, Unit::Flags flags) const = 0;
+    virtual std::shared_ptr <PrintOperatorUnit> CreatePrintOperator(const std::string& text) const = 0;
     virtual ~UnitFactory() {};
 };
 
